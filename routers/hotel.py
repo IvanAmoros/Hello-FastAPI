@@ -2,11 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 
-from schemas.hotel import HotelCreate, HotelResponse
+from schemas.hotel import HotelScrapeRequest, HotelCreate, HotelResponse
 from crud.hotel import create_hotel, get_hotels, get_hotel
 from database import get_db
+from scraper import scrape_hotel_details
 
 router = APIRouter()
+
+@router.post("/hotels/scrape", response_model=HotelResponse)
+def scrape_and_create_hotel(hotel_request: HotelScrapeRequest, db: Session = Depends(get_db)):
+    try:
+        hotel_details = scrape_hotel_details(hotel_request.name)
+        db_hotel = create_hotel(db=db, hotel=HotelCreate(**hotel_details))
+        return db_hotel
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 @router.post("/hotels/", response_model=HotelResponse)
 def create_hotel_view(hotel: HotelCreate, db: Session = Depends(get_db)):

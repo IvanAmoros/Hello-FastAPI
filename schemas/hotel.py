@@ -1,5 +1,8 @@
 from pydantic import BaseModel
 
+class HotelScrapeRequest(BaseModel):
+    name: str
+
 class HotelCreate(BaseModel):
     name: str
     location: str
