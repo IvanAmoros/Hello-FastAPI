@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import re
 
 def scrape_hotel_details(hotel_name: str):
     # Format the search query
@@ -12,7 +13,7 @@ def scrape_hotel_details(hotel_name: str):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate",
-        "DNT": "1",  # Do Not Track Request Header
+        "DNT": "1",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
     }
@@ -52,22 +53,37 @@ def scrape_hotel_details(hotel_name: str):
     hotel_soup = BeautifulSoup(hotel_content, "html.parser")
 
     # Extract hotel details (modify these selectors as needed)
-    name = hotel_soup.find("h2", {"class": "hp__hotel-name"}).text.strip() if hotel_soup.find("h2", {"class": "hp__hotel-name"}) else "No Name Found"
+    name = hotel_soup.find("h2", {"class": "pp-header__title"}).text.strip() if hotel_soup.find("h2", {"class": "pp-header__title"}) else "No Name Found"
     location = hotel_soup.find("span", {"class": "hp_address_subtitle"}).text.strip() if hotel_soup.find("span", {"class": "hp_address_subtitle"}) else "No Location Found"
     description = hotel_soup.find("div", {"id": "property_description_content"}).text.strip() if hotel_soup.find("div", {"id": "property_description_content"}) else "No Description Found"
-    number_of_comments = hotel_soup.find("span", {"class": "review_score_value"}).text.strip() if hotel_soup.find("span", {"class": "review_score_value"}) else "No Comments Found"
+    number_of_comments_text = hotel_soup.find("a", {"data-testid": "Property-Header-Nav-Tab-Trigger-reviews"}).text.strip() if hotel_soup.find("a", {"data-testid": "Property-Header-Nav-Tab-Trigger-reviews"}) else "No Comments Found"
+    number_of_comments_match = re.search(r'\(([\d\.]+)\)', number_of_comments_text)
+    number_of_comments = int(number_of_comments_match.group(1).replace('.', '')) if number_of_comments_match else 0
+    rating_text = hotel_soup.find("div", {"class": "c617a39cca"}).text.strip() if hotel_soup.find("div", {"class": "c617a39cca"}) else "No Rating Found"
+    rating_match = re.search(r'[\d\.]+', rating_text)
+    rating = float(rating_match.group()) if rating_match else 0.0
+
+    # Extract image URLs
+    image_grid = hotel_soup.find('div', {"class": "bh-photo-grid bh-photo-grid--space-down"})
+    image_elements = image_grid.find_all('a', {"class": "bh-photo-grid-item"}) if image_grid else []
+    image_urls = [img['data-thumb-url'] for img in image_elements]
+
+
+
     
     return {
         "name": name,
-        "location": location,
-        "description": description,
-        "number_of_comments": number_of_comments,
-        "url": hotel_url
+        # "location": location,
+        # "description": description,
+        # "number_of_comments": number_of_comments,
+        # "rating": rating,
+        "images": image_urls,
+        # "url": hotel_url
     }
 
 # Example usage:
 try:
-    hotel_data = scrape_hotel_details("Catalonia Barcelona Plaza")
+    hotel_data = scrape_hotel_details("w barcelona")
     print(hotel_data)
 except ValueError as e:
     print(f"Error: {e}")
