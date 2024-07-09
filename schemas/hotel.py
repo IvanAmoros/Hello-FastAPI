@@ -6,13 +6,13 @@ class Image(BaseModel):
     url: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Facility(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class HotelScrapeRequest(BaseModel):
     name: str
@@ -38,4 +38,4 @@ class HotelResponse(BaseModel):
     facilities: List[Facility]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
