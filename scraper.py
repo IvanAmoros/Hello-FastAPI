@@ -6,12 +6,12 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 def scrape_hotel_details(hotel_name: str):
-    logging.info(f"Scraping details for hotel: {hotel_name}")
+    # logging.info(f"Scraping details for hotel: {hotel_name}")
 
     # Format the search query
     search_query = hotel_name.replace(" ", "+")
     url = f"https://www.booking.com/searchresults.es.html?ss={search_query}"
-    logging.info(f"URL: {url}")
+    # logging.info(f"URL: {url}")
     
     # Define headers to emulate a browser request
     headers = {
@@ -25,22 +25,22 @@ def scrape_hotel_details(hotel_name: str):
     
     # Send a GET request to the URL with headers
     response = requests.get(url, headers=headers)
-    logging.info(f"Response status code: {response.status_code}")
+    # logging.info(f"Response status code: {response.status_code}")
     response.raise_for_status()  # Raise an HTTPError for bad responses
 
     # Parse the HTML content with BeautifulSoup
     soup = BeautifulSoup(response.text, "html.parser")
-    logging.info("Parsed HTML content")
+    # logging.info("Parsed HTML content")
    
     # Find the first hotel result using updated selectors
     hotel_element = soup.find("a", {"data-testid": "property-card-desktop-single-image"})
     if not hotel_element:
-        logging.error("Hotel not found")
+        # logging.error("Hotel not found")
         raise ValueError("Hotel not found")
     
     # Extract the hotel URL
     hotel_url = hotel_element['href']
-    logging.info(f"Hotel URL: {hotel_url}")
+    # logging.info(f"Hotel URL: {hotel_url}")
 
     # Make another GET request to the hotel URL
     hotel_response = requests.get(hotel_url, headers=headers)
@@ -49,7 +49,7 @@ def scrape_hotel_details(hotel_name: str):
 
     # Parse the hotel page HTML content with BeautifulSoup
     hotel_soup = BeautifulSoup(hotel_response.text, "html.parser")
-    logging.info("Parsed hotel page HTML content")
+    # logging.info("Parsed hotel page HTML content")
 
     # Extract hotel details (modify these selectors as needed)
     name = hotel_soup.find("h2", {"class": "pp-header__title"}).text.strip() if hotel_soup.find("h2", {"class": "pp-header__title"}) else "No Name Found"
@@ -62,24 +62,24 @@ def scrape_hotel_details(hotel_name: str):
     rating_match = re.search(r'[\d\.]+', rating_text)
     rating = float(rating_match.group()) if rating_match else 0.0
 
-    logging.info(f"Extracted details - Name: {name}, Location: {location}, Description: {description}, Comments: {number_of_comments}, Rating: {rating}")
+    # logging.info(f"Extracted details - Name: {name}, Location: {location}, Description: {description}, Comments: {number_of_comments}, Rating: {rating}")
 
     # Extract image URLs
     image_grid = hotel_soup.find('div', {"class": "clearfix bh-photo-grid bh-photo-grid--space-down fix-score-hover-opacity"})
     image_elements = image_grid.find_all('a', {"class": "bh-photo-grid-item"}) if image_grid else []
     image_urls = [img.get('data-thumb-url') for img in image_elements if img.get('data-thumb-url')]
-    logging.info(f"Extracted images: {image_urls}")
+    # logging.info(f"Extracted images: {image_urls}")
 
     # Extract most popular facilities
     facilities = []
-    facilities_section = hotel_soup.find('div', {'data-testid': 'property-most-popular-facilities-wrapper'})
+    facilities_section = hotel_soup.find('div', {'data-capla-component-boundary': 'b-property-web-property-page/PropertyMostPopularFacilities'})
     if facilities_section:
-        facilities_list_items = facilities_section.find_all('li', {'class': 'd044972638'})
+        facilities_list_items = facilities_section.find_all('li', {'class': 'e1fbf4ac86'})
         for item in facilities_list_items:
-            facility = item.find('span', {'class': 'ebd881c9a1'})
+            facility = item.find('span', {'class': 'e39ce2c19b'})
             if facility:
                 facilities.append(facility.text.strip())
-    logging.info(f"Extracted facilities: {facilities}")
+    # logging.info(f"Extracted facilities: {facilities}")
 
     return {
         "name": name,

@@ -23,8 +23,19 @@ class HotelCreate(BaseModel):
     description: str
     number_of_comments: int
     rating: float
+    hotel_url: str
     images: List[Image]
     facilities: List[Facility]
+
+class HotelUpdate(BaseModel):
+    name: Optional[str]
+    location: Optional[str]
+    description: Optional[str]
+    number_of_comments: Optional[int]
+    rating: Optional[float]
+    hotel_url: Optional[str]
+    images: Optional[List[Image]]
+    facilities: Optional[List[Facility]]
 
 class HotelResponse(BaseModel):
     id: int
@@ -34,6 +45,7 @@ class HotelResponse(BaseModel):
     number_of_comments: int
     rating: float
     created_at: datetime
+    hotel_url: str
     images: List[Image]
     facilities: List[Facility]
 

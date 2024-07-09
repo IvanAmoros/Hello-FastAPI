@@ -18,6 +18,7 @@ class Hotel(Base):
     description = Column(String, nullable=False)
     number_of_comments = Column(Integer, nullable=False)
     rating = Column(String, nullable=False)
+    hotel_url = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
 
     images = relationship("Image", back_populates="hotel")

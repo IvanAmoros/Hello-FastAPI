@@ -1,9 +1,7 @@
 from sqlalchemy.orm import Session
 from models.hotel import Hotel, Image, Facility
-from schemas.hotel import HotelCreate
+from schemas.hotel import HotelCreate, HotelUpdate
 
-def get_hotel_by_name(db: Session, name: str):
-    return db.query(Hotel).filter(Hotel.name == name).first()
 
 def get_facility_by_name(db: Session, name: str):
     return db.query(Facility).filter(Facility.name == name).first()
@@ -20,6 +18,7 @@ def create_hotel(db: Session, hotel: HotelCreate):
         description=hotel.description,
         number_of_comments=hotel.number_of_comments,
         rating=hotel.rating,
+        hotel_url=hotel.hotel_url,
     )
     db.add(db_hotel)
     db.commit()
@@ -46,5 +45,29 @@ def create_hotel(db: Session, hotel: HotelCreate):
 def get_hotels(db: Session):
     return db.query(Hotel).all()
 
-def get_hotel(db: Session, hotel_id: int):
+def get_hotel_by_id(db: Session, hotel_id: int):
     return db.query(Hotel).filter(Hotel.id == hotel_id).first()
+
+def get_hotel_by_name(db: Session, name: str):
+    return db.query(Hotel).filter(Hotel.name == name).first()
+
+def update_hotel(db: Session, hotel_id: int, hotel_update: HotelUpdate):
+    db_hotel = db.query(Hotel).filter(Hotel.id == hotel_id).first()
+    if db_hotel is None:
+        return None
+    
+    for key, value in hotel_update.dict(exclude_unset=True).items():
+        setattr(db_hotel, key, value)
+    
+    db.commit()
+    db.refresh(db_hotel)
+    return db_hotel
+
+def delete_hotel(db: Session, hotel_id: int):
+    db_hotel = db.query(Hotel).filter(Hotel.id == hotel_id).first()
+    if db_hotel is None:
+        return None
+    
+    db.delete(db_hotel)
+    db.commit()
+    return db_hotel
