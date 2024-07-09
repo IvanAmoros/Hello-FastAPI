@@ -10,7 +10,3 @@ Base.metadata.create_all(bind=engine)
 
 # Include routers
 app.include_router(hotel.router)
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the Hotel Scraper API!"}
