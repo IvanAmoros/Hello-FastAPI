@@ -55,10 +55,27 @@ def update_hotel(db: Session, hotel_id: int, hotel_update: HotelUpdate):
     db_hotel = db.query(Hotel).filter(Hotel.id == hotel_id).first()
     if db_hotel is None:
         return None
-    
+
+    # Update hotel attributes
     for key, value in hotel_update.dict(exclude_unset=True).items():
-        setattr(db_hotel, key, value)
-    
+        if key == 'images':
+            # Clear existing images and add new ones
+            db.query(Image).filter(Image.hotel_id == hotel_id).delete()
+            db_hotel.images = [Image(url=img['url'], hotel_id=hotel_id) for img in value]
+        elif key == 'facilities':
+            # Clear existing facilities and add new ones
+            db_hotel.facilities = []
+            for fac in value:
+                existing_facility = get_facility_by_name(db, fac['name'])
+                if existing_facility:
+                    db_hotel.facilities.append(existing_facility)
+                else:
+                    new_facility = Facility(name=fac['name'])
+                    db.add(new_facility)
+                    db_hotel.facilities.append(new_facility)
+        else:
+            setattr(db_hotel, key, value)
+
     db.commit()
     db.refresh(db_hotel)
     return db_hotel
@@ -67,7 +84,16 @@ def delete_hotel(db: Session, hotel_id: int):
     db_hotel = db.query(Hotel).filter(Hotel.id == hotel_id).first()
     if db_hotel is None:
         return None
+
+    # Delete associated images
+    db_images = db.query(Image).filter(Image.hotel_id == hotel_id).all()
+    for db_image in db_images:
+        db.delete(db_image)
     
+    # Delete associated facilities
+    db_hotel.facilities.clear()
+    
+    # Delete the hotel
     db.delete(db_hotel)
     db.commit()
     return db_hotel
