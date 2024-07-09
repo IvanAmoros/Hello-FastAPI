@@ -44,14 +44,14 @@ def read_hotels(db: Session = Depends(get_db)):
     return get_hotels(db=db)
 
 @router.get("/hotels/hotel_id/{hotel_id}", response_model=HotelResponse, tags=["Read"])
-def read_hotel(hotel_id: int, db: Session = Depends(get_db)):
+def read_hotel_by_id(hotel_id: int, db: Session = Depends(get_db)):
     db_hotel = get_hotel_by_id(db=db, hotel_id=hotel_id)
     if db_hotel is None:
         raise HTTPException(status_code=404, detail=f"Hotel with id {hotel_id} not found")
     return db_hotel
 
 @router.get("/hotels/name/{hotel_name}", response_model=HotelResponse, tags=["Read"])
-def read_hotel(hotel_name: str, db: Session = Depends(get_db)):
+def read_hotel_by_name(hotel_name: str, db: Session = Depends(get_db)):
     db_hotel = get_hotel_by_name(db=db, name=hotel_name)
     if db_hotel is None:
         raise HTTPException(status_code=404, detail=f"Hotel with name {hotel_name} not found")
