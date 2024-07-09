@@ -6,7 +6,6 @@ def scrape_hotel_details(hotel_name: str):
     # Format the search query
     search_query = hotel_name.replace(" ", "+")
     url = f"https://www.booking.com/searchresults.es.html?ss={search_query}"
-    print(f"URL: {url}")
     
     # Define headers to emulate a browser request
     headers = {
@@ -20,16 +19,11 @@ def scrape_hotel_details(hotel_name: str):
     
     # Send a GET request to the URL with headers
     response = requests.get(url, headers=headers)
-    print(f"Response status code: {response.status_code}")
     response.raise_for_status()  # Raise an HTTPError for bad responses
 
     # Parse the HTML content with BeautifulSoup
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Save the parsed HTML content to a file for debugging
-    with open("debug_response_parsed.html", "w", encoding="utf-8") as file:
-        file.write(str(soup))
-    
     # Find the first hotel result using updated selectors
     hotel_element = soup.find("a", {"data-testid": "property-card-desktop-single-image"})
     if not hotel_element:
@@ -37,20 +31,13 @@ def scrape_hotel_details(hotel_name: str):
     
     # Extract the hotel URL
     hotel_url = hotel_element['href']
-    print(f"Hotel URL: {hotel_url}")
 
     # Make another GET request to the hotel URL
     hotel_response = requests.get(hotel_url, headers=headers)
-    print(f"Hotel page response status code: {hotel_response.status_code}")
     hotel_response.raise_for_status()  # Raise an HTTPError for bad responses
 
-    # Save the hotel page HTML content to a file
-    hotel_content = hotel_response.text
-    with open("hotel_page.html", "w", encoding="utf-8") as file:
-        file.write(hotel_content)
-
     # Parse the hotel page HTML content with BeautifulSoup
-    hotel_soup = BeautifulSoup(hotel_content, "html.parser")
+    hotel_soup = BeautifulSoup(hotel_response.text, "html.parser")
 
     # Extract hotel details (modify these selectors as needed)
     name = hotel_soup.find("h2", {"class": "pp-header__title"}).text.strip() if hotel_soup.find("h2", {"class": "pp-header__title"}) else "No Name Found"
@@ -64,26 +51,27 @@ def scrape_hotel_details(hotel_name: str):
     rating = float(rating_match.group()) if rating_match else 0.0
 
     # Extract image URLs
-    image_grid = hotel_soup.find('div', {"class": "bh-photo-grid bh-photo-grid--space-down"})
+    image_grid = hotel_soup.find('div', {"class": "clearfix bh-photo-grid bh-photo-grid--space-down fix-score-hover-opacity"})
     image_elements = image_grid.find_all('a', {"class": "bh-photo-grid-item"}) if image_grid else []
-    image_urls = [img['data-thumb-url'] for img in image_elements]
+    image_urls = [img.get('data-thumb-url') for img in image_elements if img.get('data-thumb-url')]
 
+    # Extract most popular facilities
+    facilities = []
+    facilities_section = hotel_soup.find('div', {'data-testid': 'property-most-popular-facilities-wrapper'})
+    if facilities_section:
+        facilities_list_items = facilities_section.find_all('li', {'class': 'd044972638'})
+        for item in facilities_list_items:
+            facility = item.find('span', {'class': 'ebd881c9a1'})
+            if facility:
+                facilities.append(facility.text.strip())
 
-
-    
     return {
         "name": name,
-        # "location": location,
-        # "description": description,
-        # "number_of_comments": number_of_comments,
-        # "rating": rating,
+        "location": location,
+        "description": description,
+        "number_of_comments": number_of_comments,
+        "rating": rating,
         "images": image_urls,
-        # "url": hotel_url
+        "facilities": facilities,
+        "url": hotel_url
     }
-
-# Example usage:
-try:
-    hotel_data = scrape_hotel_details("w barcelona")
-    print(hotel_data)
-except ValueError as e:
-    print(f"Error: {e}")
