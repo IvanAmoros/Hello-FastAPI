@@ -32,10 +32,6 @@ def scrape_hotel_details(hotel_name: str):
     soup = BeautifulSoup(response.text, "html.parser")
     logging.info("Parsed HTML content")
    
-   # Write the parsed HTML content to a file for inspection
-    with open("search_results.html", "w", encoding="utf-8") as f:
-        f.write(soup.prettify())
-
     # Find the first hotel result using updated selectors
     hotel_element = soup.find("a", {"data-testid": "property-card-desktop-single-image"})
     if not hotel_element:
